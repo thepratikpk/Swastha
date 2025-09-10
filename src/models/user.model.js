@@ -1,14 +1,9 @@
 import mongoose, { model } from "mongoose";
 
 const addressSchema = new mongoose.Schema({
-    street: String,
     city: String,
     state: String,
     country: String,
-    pincode: {
-        type: String,
-        match: [/^\d{6}$/, "Invalid pincode"]
-    },
     isDefault: { type: Boolean, default: false }
 })
 
