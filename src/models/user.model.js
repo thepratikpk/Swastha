@@ -1,80 +1,43 @@
-import mongoose, { model } from "mongoose";
+import mongoose, { Schema } from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
     city: String,
     state: String,
     country: String,
     isDefault: { type: Boolean, default: false }
-})
+});
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
     name: {
         type: String,
         required: true
     },
-    dob: {
-        type: Date,
-        required: true
-    },
-    gender: {
-        type: String,
-        required: true,
-        enum: ["male", "female", "prefer not to say"]
-    },
-    contact: {
-        type: String,
-        required:true
-
-    },
-    address:[addressSchema],
     email: {
         type: String,
-        required: true,
         unique: true,
+        required: true,
         trim: true
     },
     password: {
         type: String,
-        required: true,
+        required: true
     },
+    dob: Date,
+    gender: {
+        type: String,
+        enum: ["male", "female", "prefer not to say"]
+    },
+    contact: String,
+   
+    address: [addressSchema], 
     role: {
         type: String,
-        enum: ["doctor", "patient"],
-        required: true
-    },
-
-    // Patient specific
-    ayurvedic_category: {
-        type: String,
-        enum: ["vata", "pitta", 'kapha']
-    },
-    medical_history: [String],
-    diseases: [String],               // ["Diabetes","Hypertension", ...]
-    assigned_doctor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
-    allergies: {
-        type: [String],
-    },
-
-
-    // doctor Specific
-
-    specialization: {
-        type: [String],
-        required: true
-    },
-    experience: Number,
-    verification_status: { type: Boolean, default: false },
-    patients: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
-        }
-    ],
+        required: true,
+        enum: ['patient', 'doctor']
+    }
 }, {
-    timestamps: true
-})
+    timestamps: true,
+    discriminatorKey: 'role'
+});
 
-export default User = mongoose.model("User", userSchema)
+export const User = mongoose.model('User', userSchema);
