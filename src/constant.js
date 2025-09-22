@@ -1,1 +1,1 @@
-export const DB_NAME="SWASTHA"
+export const DB_NAME="SWASTHASETU"
