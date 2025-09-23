@@ -17,5 +17,4 @@ const doctorSchema = new mongoose.Schema({
     }]
 });
 
-// Create the Doctor model using the discriminator() method
 export const Doctor = User.discriminator('doctor', doctorSchema);

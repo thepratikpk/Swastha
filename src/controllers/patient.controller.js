@@ -1,11 +1,12 @@
 import { Patient } from "../models/patient.model.js";
-import { User } from "../models/user.model.js"; // You need this import
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiResponse } from "../utils/ApiResponse.js"; // You need this import
-import validator from "validator"; // You need this import
+import { ApiResponse } from "../utils/ApiResponse.js";
+import validator from "validator";
 
 const registerPatient = asyncHandler(async (req, res) => {
+    // ⚠️ Note: req.body will contain non-file fields as strings from FormData.
     const { 
         name, 
         email, 
@@ -13,20 +14,32 @@ const registerPatient = asyncHandler(async (req, res) => {
         dob, 
         gender, 
         contact, 
-        address,
+        address, // This will be a JSON string from the frontend
         ayurvedic_category,
         mode,
         medical_history,
-        diseases,
         allergies
     } = req.body;
 
-    // The validation check is correct as long as all fields are provided in the request body.
+    // 1. Handle the JSON string for the 'address' field
+    let parsedAddress = {};
+    if (address) {
+        try {
+            parsedAddress = JSON.parse(address);
+        } catch (error) {
+            throw new ApiError(400, "Invalid address format.");
+        }
+    }
+    
+    // 2. Access the uploaded file from req.files (due to Multer configuration)
+    const medicalDocFile = req.files?.medicalDoc?.[0];
+    const medicalDocPath = medicalDocFile ? medicalDocFile.path : null;
+
+    // 3. Perform validation checks
     if (!name || !email || !password || !dob || !gender || !contact || !ayurvedic_category || !mode) {
         throw new ApiError(400, "All required patient fields must be provided.");
     }
     
-    // Validate core fields
     if (!validator.isEmail(email)) {
         throw new ApiError(400, "Invalid email format.");
     }
@@ -40,7 +53,11 @@ const registerPatient = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with this email already exists.");
     }
 
-    // Corrected line: Use Model.create() directly without the 'new' keyword
+    // 4. Parse comma-separated strings into arrays
+    const parsedAllergies = allergies ? allergies.split(',').map(s => s.trim()) : [];
+    const parsedMedicalHistory = medical_history ? medical_history.split(',').map(s => s.trim()) : [];
+
+    // 5. Create the new patient entry
     const newPatient = await Patient.create({
         name,
         email: email.toLowerCase(),
@@ -48,15 +65,14 @@ const registerPatient = asyncHandler(async (req, res) => {
         dob,
         gender,
         contact,
-        address,
+        address: parsedAddress, // Use the parsed object
         ayurvedic_category,
         mode,
-        medical_history,
-        diseases,
-        allergies
+        medical_history: parsedMedicalHistory,
+        allergies: parsedAllergies,
+        medicalDoc: medicalDocPath, // Store the path to the uploaded file
     });
 
-    // The created document is returned directly from Patient.create()
     const createdPatient = await Patient.findById(newPatient._id).select("-password");
 
     if (!createdPatient) {
