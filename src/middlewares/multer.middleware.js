@@ -1,20 +1,13 @@
-import multer from 'multer';
-import path from 'path';
+import multer from "multer";
 
-// Define the storage destination and filename
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Specify the directory for temporary file storage
-    // Make sure this directory exists in your project
-    cb(null, './public/temp'); 
+    const dest = process.env.NODE_ENV === "production" ? "/tmp" : "./public/temp";
+    cb(null, dest);
   },
   filename: function (req, file, cb) {
-    // Create a unique filename to avoid conflicts
-    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-  },
+    cb(null, Date.now() + "-" + file.originalname);
+  }
 });
 
-// Configure multer with the storage options
-export const upload = multer({ 
-  storage: storage 
-});
+export const upload = multer({ storage });

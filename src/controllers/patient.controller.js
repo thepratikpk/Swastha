@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import validator from "validator";
+import { uploadOnGCS } from "../utils/gcs.js";
 
 const generateRefreshAndAccessTokens = async (userId) => {
     try {
@@ -20,84 +21,70 @@ const generateRefreshAndAccessTokens = async (userId) => {
     }
 }
 
+
+
 const registerPatient = asyncHandler(async (req, res) => {
-    // ⚠️ Note: req.body will contain non-file fields as strings from FormData.
-    const { 
-        name, 
-        email, 
-        password, 
-        dob, 
-        gender, 
-        contact, 
-        address, // This will be a JSON string from the frontend
-        ayurvedic_category,
-        mode,
-        medical_history,
-        allergies
-    } = req.body;
+  const { 
+    name, email, password, dob, gender, contact, address,
+    ayurvedic_category, mode, diseases, allergies 
+  } = req.body;
 
-    // 1. Handle the JSON string for the 'address' field
-    let parsedAddress = {};
-    if (address) {
-        try {
-            parsedAddress = JSON.parse(address);
-        } catch (error) {
-            throw new ApiError(400, "Invalid address format.");
-        }
+  if (!name || !email || !password || !dob || !gender || !contact || !ayurvedic_category || !mode) {
+    throw new ApiError(400, "All required patient fields must be provided");
+  }
+
+  const existedUser = await User.findOne({ email });
+  if (existedUser) {
+    throw new ApiError(409, "User with this email already exists");
+  }
+
+  // ✅ Parse address JSON string into array
+  let parsedAddress = [];
+  if (address) {
+    try {
+      parsedAddress = JSON.parse(address);
+      if (!Array.isArray(parsedAddress)) throw new Error();
+    } catch (err) {
+      throw new ApiError(400, "Address must be a valid JSON array of objects");
     }
-    
-    // 2. Access the uploaded file from req.files (due to Multer configuration)
-    const medicalDocFile = req.files?.medicalDoc?.[0];
-    const medicalDocPath = medicalDocFile ? medicalDocFile.path : null;
+  }
 
-    // 3. Perform validation checks
-    if (!name || !email || !password || !dob || !gender || !contact || !ayurvedic_category || !mode) {
-        throw new ApiError(400, "All required patient fields must be provided.");
-    }
-    
-    if (!validator.isEmail(email)) {
-        throw new ApiError(400, "Invalid email format.");
-    }
+  // ✅ Upload medical documents to GCS
+  const uploadedDocs = Object.values(req.files || {}).flatMap(fileArr =>
+    fileArr.map(file => file.path)
+  );
 
-    if (password.length < 6) {
-        throw new ApiError(400, "Password must be at least 6 characters long.");
-    }
+  const medical_history = await Promise.all(
+    uploadedDocs.map(async (localFilePath) => {
+      const gcsRes = await uploadOnGCS(localFilePath, "PatientDocuments");
+      return gcsRes?.secure_url || null;
+    })
+  );
 
-    const existedUser = await User.findOne({ email });
-    if (existedUser) {
-        throw new ApiError(409, "User with this email already exists.");
-    }
+  const filteredMedicalHistory = medical_history.filter(Boolean);
 
-    // 4. Parse comma-separated strings into arrays
-    const parsedAllergies = allergies ? allergies.split(',').map(s => s.trim()) : [];
-    const parsedMedicalHistory = medical_history ? medical_history.split(',').map(s => s.trim()) : [];
+  // ✅ Create new patient
+  const newPatient = await Patient.create({
+    name,
+    email: email.toLowerCase(),
+    password,
+    dob,
+    gender,
+    contact,
+    address: parsedAddress,
+    ayurvedic_category,
+    mode,
+    diseases: diseases ? diseases.split(",").map(d => d.trim()) : [],
+    allergies: allergies ? allergies.split(",").map(a => a.trim()) : [],
+    medical_history: filteredMedicalHistory
+  });
 
-    // 5. Create the new patient entry
-    const newPatient = await Patient.create({
-        name,
-        email: email.toLowerCase(),
-        password,
-        dob,
-        gender,
-        contact,
-        address: parsedAddress, // Use the parsed object
-        ayurvedic_category,
-        mode,
-        medical_history: parsedMedicalHistory,
-        allergies: parsedAllergies,
-        medicalDoc: medicalDocPath, // Store the path to the uploaded file
-    });
-
-    const createdPatient = await Patient.findById(newPatient._id).select("-password");
-
-    if (!createdPatient) {
-        throw new ApiError(500, "Something went wrong while registering the patient.");
-    }
-
-    return res
-        .status(201)
-        .json(new ApiResponse(201, createdPatient, "Patient registered successfully"));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newPatient, "Patient registered successfully"));
 });
+
+
 
 const loginPatient = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
