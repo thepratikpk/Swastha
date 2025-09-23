@@ -42,7 +42,10 @@ const userSchema = new Schema({
         type: String,
         required: true,
         enum: ['patient', 'doctor']
-    }
+    },
+    refreshToken:{
+        type:String
+    },
 }, {
     timestamps: true,
     discriminatorKey: 'role'
