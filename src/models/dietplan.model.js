@@ -103,6 +103,7 @@ const dietPlanSchema = new mongoose.Schema({
 dietPlanSchema.index({ patient: 1, createdBy: 1 });
 
 export const DietPlan = mongoose.model("DietPlan", dietPlanSchema);
+export const FoodItem = mongoose.model("FoodItem", foodItemSchema);
 
 
 
