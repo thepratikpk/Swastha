@@ -26,7 +26,24 @@ app.use(cookieParser())
 
 
 import patientRouter from './routes/patient.routes.js'
+import doctorRouter from './routes/doctor.routes.js'
 
 app.use('/api/patient',patientRouter);
+app.use('/api/doctor',doctorRouter);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    
+    console.error("Error:", err);
+    
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
 
 export {app}

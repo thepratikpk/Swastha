@@ -23,28 +23,28 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    dob:{
-        type:Date,
-        required:true
+    dob: {
+        type: Date,
+        required: true
     },
     gender: {
         type: String,
-        required:true,
+        required: true,
         enum: ["male", "female", "prefer not to say"]
     },
-    contact:{
-        type:String,
-        required:true,
+    contact: {
+        type: String,
+        required: true,
     },
-   
-    address: [addressSchema], 
+
+    address: [addressSchema],
     role: {
         type: String,
         required: true,
         enum: ['patient', 'doctor']
     },
-    refreshToken:{
-        type:String
+    refreshToken: {
+        type: String
     },
 }, {
     timestamps: true,

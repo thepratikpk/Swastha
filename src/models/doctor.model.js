@@ -2,11 +2,35 @@ import mongoose from 'mongoose';
 import { User } from './user.model.js';
 
 const doctorSchema = new mongoose.Schema({
-    specialization: {
-        type: [String],
+    licenseNo: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    hospital: {
+        type: String,
         required: true
     },
-    experience: Number,
+    specialty: {
+        type: String,
+        required: true
+    },
+    phone: {
+        type: String,
+        required: true
+    },
+    bio: {
+        type: String,
+        default: ''
+    },
+    specialization: {
+        type: [String],
+        default: function() { return [this.specialty]; }
+    },
+    experience: {
+        type: Number,
+        default: 0
+    },
     verification_status: {
         type: Boolean,
         default: false
