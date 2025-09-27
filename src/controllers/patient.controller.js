@@ -26,7 +26,7 @@ const generateRefreshAndAccessTokens = async (userId) => {
 const registerPatient = asyncHandler(async (req, res) => {
   const {
     name, email, password, dob, gender, contact, address,
-    ayurvedic_category, mode, diseases, allergies
+    ayurvedic_category, mode, diseases, allergies, height, weight
   } = req.body;
 
   if (!name || !email || !password || !dob || !gender || !contact || !ayurvedic_category || !mode) {
@@ -77,7 +77,9 @@ const registerPatient = asyncHandler(async (req, res) => {
     mode,
     diseases: diseases ? diseases.split(",").map(d => d.trim()) : [],
     allergies: allergies ? allergies.split(",").map(a => a.trim()) : [],
-    medical_history: filteredMedicalHistory
+    medical_history: filteredMedicalHistory,
+    height: height ? parseFloat(height) : null,
+    weight: weight ? parseFloat(weight) : null
   });
 
   return res
