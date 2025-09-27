@@ -13,7 +13,7 @@ const patientSchema = new mongoose.Schema({
     diseases: [String],
     assigned_doctor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Doctor "
+        ref: "Doctor"
     },
     mode: {
         type: String,

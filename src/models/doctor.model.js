@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { User } from './user.model.js';
 
+
 const doctorSchema = new mongoose.Schema({
     licenseNo: {
         type: String,
