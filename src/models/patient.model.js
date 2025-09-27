@@ -5,7 +5,7 @@ import { User } from './user.model.js';
 const patientSchema = new mongoose.Schema({
     ayurvedic_category: {
         type: String,
-        required:true,
+        required: true,
         enum: ["vata", "pitta", "kapha"]
     },
     medical_history: [String],
@@ -14,10 +14,10 @@ const patientSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Doctor"
     },
-    mode:{
-        type:String,
-        required:true,
-        enum:["online","offline"]
+    mode: {
+        type: String,
+        required: true,
+        enum: ["online", "offline"]
     },
     allergies: [String]
 });
